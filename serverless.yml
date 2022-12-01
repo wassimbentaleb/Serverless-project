@@ -1,0 +1,71 @@
+service: contracts-management
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  environment:
+    API_KEY: lPpdaKwVw4Kv4FWJFxUTDXr9M5zFJfF4f6R9PT1u0ByxDEtMPogFO54Sb509G4WZ
+
+plugins:
+  - serverless-dynamodb-local
+  - serverless-middleware
+  - serverless-offline
+
+custom:
+  tableName: contracts
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+
+resources:
+  Resources:
+    contractsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: contracts
+        AttributeDefinitions:
+          - AttributeName: contractID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: contractID
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+functions:
+  createContract:
+    middleware:
+      pre: middlewares/authentication.handler
+    handler: endpoints/contract/create.handler
+    events:
+      - http:
+          path: createContract
+          method: post
+          cors: true
+
+  getContract:
+    middleware:
+      pre: middlewares/authentication.handler
+    handler: endpoints/contract/getOne.handler
+    events:
+      - http:
+          path: getContract
+          method: get
+          cors: true
+
+  getContractIDs:
+    middleware:
+      pre: middlewares/authentication.handler
+    handler: endpoints/contract/getIDs.handler
+    events:
+      - http:
+          path: getContractIDs
+          method: get
+          cors: true
+      
